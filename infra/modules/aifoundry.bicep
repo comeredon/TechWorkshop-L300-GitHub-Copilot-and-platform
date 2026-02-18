@@ -54,6 +54,7 @@ resource aiServices 'Microsoft.CognitiveServices/accounts@2024-04-01-preview' = 
   properties: {
     customSubDomainName: aiServicesName
     publicNetworkAccess: 'Enabled'
+    disableLocalAuth: true
   }
 }
 
@@ -143,51 +144,18 @@ resource aiProject 'Microsoft.MachineLearningServices/workspaces@2024-04-01' = {
   }
 }
 
-// ── RBAC: AI Hub → Key Vault (Secrets Officer) ───────────────────────────────
-
-resource kvSecretsOfficerRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(keyVault.id, aiHub.id, 'b86a8fe4-44ce-4948-aee5-eccb2c155cd7')
-  scope: keyVault
-  properties: {
-    roleDefinitionId: subscriptionResourceId(
-      'Microsoft.Authorization/roleDefinitions',
-      'b86a8fe4-44ce-4948-aee5-eccb2c155cd7' // Key Vault Secrets Officer
-    )
-    principalId: aiHub.identity.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
-
-// ── RBAC: AI Hub → Storage Account (Storage Blob Data Contributor) ───────────
-
-resource storageBlobDataContributorRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(storageAccount.id, aiHub.id, 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')
-  scope: storageAccount
-  properties: {
-    roleDefinitionId: subscriptionResourceId(
-      'Microsoft.Authorization/roleDefinitions',
-      'ba92f5b4-2d11-453d-a403-e96b0029c9fe' // Storage Blob Data Contributor
-    )
-    principalId: aiHub.identity.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
-
-// ── RBAC: AI Hub → AI Services (Cognitive Services User) ─────────────────────
-
-resource aiServicesUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(aiServices.id, aiHub.id, 'a97b65f3-24c7-4388-baec-2e87135dc908')
-  scope: aiServices
-  properties: {
-    roleDefinitionId: subscriptionResourceId(
-      'Microsoft.Authorization/roleDefinitions',
-      'a97b65f3-24c7-4388-baec-2e87135dc908' // Cognitive Services User
-    )
-    principalId: aiHub.identity.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
+// ── RBAC note ────────────────────────────────────────────────────────────────
+// Azure AI Foundry auto-creates and manages all Hub role assignments when the
+// workspace is provisioned. The following are created by the platform with
+// platform-generated GUIDs and must NOT be declared here — doing so causes a
+// RoleAssignmentExists conflict on every deployment:
+//   • Key Vault Secrets Officer  (Hub → Key Vault)
+//   • Storage Blob Data Contributor (Hub → Storage Account)
+//   • Cognitive Services User (Hub → AI Services)
+// Only the App Service → AI Services assignment lives in a separate module
+// (aifoundry-appservice-rbac.bicep) because it is NOT auto-created.
 
 output hubId string = aiHub.id
 output projectId string = aiProject.id
 output aiServicesEndpoint string = aiServices.properties.endpoint
+output aiServicesName string = aiServices.name

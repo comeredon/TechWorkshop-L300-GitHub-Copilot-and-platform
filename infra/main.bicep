@@ -50,6 +50,17 @@ module acr './modules/acr.bicep' = {
   }
 }
 
+module aiFoundry './modules/aifoundry.bicep' = {
+  name: 'aifoundry'
+  scope: rg
+  params: {
+    hubName: 'aih-${resourceToken}'
+    projectName: 'aip-${resourceToken}'
+    location: location
+    tags: tags
+  }
+}
+
 module appService './modules/appservice.bicep' = {
   name: 'appservice'
   scope: rg
@@ -60,17 +71,19 @@ module appService './modules/appservice.bicep' = {
     appInsightsConnectionString: appInsights.outputs.connectionString
     acrLoginServer: acr.outputs.loginServer
     acrName: acr.outputs.name
+    aiServicesEndpoint: aiFoundry.outputs.aiServicesEndpoint
   }
 }
 
-module aiFoundry './modules/aifoundry.bicep' = {
-  name: 'aifoundry'
+// Separate module to avoid circular dependency:
+// appService depends on aiFoundry (for endpoint), so the RBAC
+// that needs both outputs must live in its own module.
+module aifoundryAppServiceRbac './modules/aifoundry-appservice-rbac.bicep' = {
+  name: 'aifoundry-appservice-rbac'
   scope: rg
   params: {
-    hubName: 'aih-${resourceToken}'
-    projectName: 'aip-${resourceToken}'
-    location: location
-    tags: tags
+    aiServicesName: aiFoundry.outputs.aiServicesName
+    appServicePrincipalId: appService.outputs.principalId
   }
 }
 
