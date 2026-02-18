@@ -26,8 +26,17 @@ namespace ZavaStorefront.Controllers
             if (message.Length > 1000)
                 message = message[..1000];
 
-            var reply = await _chatService.GetResponseAsync(message);
-            return Json(new { reply });
+            try
+            {
+                var reply = await _chatService.GetResponseAsync(message);
+                return Json(new { reply });
+            }
+            catch (Exception ex)
+            {
+                // Log to App Insights / stdout and return a safe user-facing message
+                Console.Error.WriteLine($"[ChatController] Error calling AI: {ex.GetType().Name}: {ex.Message}");
+                return Json(new { reply = "Sorry, I'm having trouble connecting to the assistant right now. Please try again in a moment." });
+            }
         }
     }
 

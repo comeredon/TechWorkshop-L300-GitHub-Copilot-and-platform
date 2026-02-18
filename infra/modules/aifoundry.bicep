@@ -182,5 +182,8 @@ output hubId string = aiHub.id
 output projectId string = aiProject.id
 output aiServicesEndpoint string = aiServices.properties.endpoint
 output aiServicesName string = aiServices.name
-// Azure AI model inference endpoint — used by Azure.AI.Inference SDK to access Phi-4
-output aiInferenceEndpoint string = 'https://${aiServicesName}.services.ai.azure.com/models'
+// Azure AI model inference endpoint — used by Azure.AI.Inference SDK to access Phi-4.
+// Uses cognitiveservices.azure.com domain so the App Service managed identity's
+// "Cognitive Services User" RBAC role (scoped to this AI Services resource) is honoured.
+// The services.ai.azure.com alias would require a separate AI Foundry RBAC assignment.
+output aiInferenceEndpoint string = 'https://${aiServicesName}.cognitiveservices.azure.com/models'
