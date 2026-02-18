@@ -7,4 +7,9 @@
     <UserSecretsId>933cd0c7-9051-4c54-ac64-3ac92a0d1dc0</UserSecretsId>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Azure.AI.Inference" Version="1.0.0-beta.5" />
+    <PackageReference Include="Azure.Identity" Version="1.17.1" />
+  </ItemGroup>
+
 </Project>

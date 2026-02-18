@@ -182,3 +182,5 @@ output hubId string = aiHub.id
 output projectId string = aiProject.id
 output aiServicesEndpoint string = aiServices.properties.endpoint
 output aiServicesName string = aiServices.name
+// Azure AI model inference endpoint — used by Azure.AI.Inference SDK to access Phi-4
+output aiInferenceEndpoint string = 'https://${aiServicesName}.services.ai.azure.com/models'

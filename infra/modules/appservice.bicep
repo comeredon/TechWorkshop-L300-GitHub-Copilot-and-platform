@@ -5,6 +5,7 @@ param appInsightsConnectionString string
 param acrLoginServer string
 param acrName string
 param aiServicesEndpoint string
+param aiInferenceEndpoint string
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2023-12-01' = {
   name: 'asp-${name}'
@@ -56,6 +57,10 @@ resource appService 'Microsoft.Web/sites@2023-12-01' = {
         {
           name: 'AZURE_AI_SERVICES_ENDPOINT'
           value: aiServicesEndpoint
+        }
+        {
+          name: 'AZURE_AI_INFERENCE_ENDPOINT'
+          value: aiInferenceEndpoint
         }
       ]
     }

@@ -73,6 +73,7 @@ module appService './modules/appservice.bicep' = {
     acrLoginServer: acr.outputs.loginServer
     acrName: acr.outputs.name
     aiServicesEndpoint: aiFoundry.outputs.aiServicesEndpoint
+    aiInferenceEndpoint: aiFoundry.outputs.aiInferenceEndpoint
   }
 }
 
