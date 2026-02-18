@@ -33,8 +33,8 @@ resource appService 'Microsoft.Web/sites@2023-12-01' = {
     serverFarmId: appServicePlan.id
     httpsOnly: true
     siteConfig: {
-      // Placeholder image until azd deploy; replaced automatically
-      linuxFxVersion: 'DOCKER|mcr.microsoft.com/appsvc/staticsite:latest'
+      // linuxFxVersion is intentionally omitted here — azd deploy manages the
+      // container image. Setting it in Bicep would reset it on every provision.
       // Pull from ACR using system-assigned Managed Identity — no passwords
       acrUseManagedIdentityCreds: true
       appSettings: [
