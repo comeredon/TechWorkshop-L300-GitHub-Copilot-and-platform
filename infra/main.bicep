@@ -58,6 +58,7 @@ module aiFoundry './modules/aifoundry.bicep' = {
     projectName: 'aip-${resourceToken}'
     location: location
     tags: tags
+    logAnalyticsWorkspaceId: logAnalytics.outputs.id
   }
 }
 

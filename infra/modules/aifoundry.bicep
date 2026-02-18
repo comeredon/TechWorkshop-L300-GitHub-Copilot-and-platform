@@ -2,6 +2,7 @@ param hubName string
 param projectName string
 param location string
 param tags object = {}
+param logAnalyticsWorkspaceId string
 
 // Unique suffixes for supporting resources scoped to this hub
 var storageAccountName = 'st${uniqueString(resourceGroup().id, hubName)}'
@@ -141,6 +142,28 @@ resource aiProject 'Microsoft.MachineLearningServices/workspaces@2024-04-01' = {
   properties: {
     hubResourceId: aiHub.id
     friendlyName: projectName
+  }
+}
+
+// ── Diagnostic settings (Hub → Log Analytics) ───────────────────────────────
+
+resource aiHubDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  name: 'diag-${aiHub.name}'
+  scope: aiHub
+  properties: {
+    workspaceId: logAnalyticsWorkspaceId
+    logs: [
+      {
+        categoryGroup: 'allLogs'
+        enabled: true
+      }
+    ]
+    metrics: [
+      {
+        category: 'AllMetrics'
+        enabled: true
+      }
+    ]
   }
 }
 
