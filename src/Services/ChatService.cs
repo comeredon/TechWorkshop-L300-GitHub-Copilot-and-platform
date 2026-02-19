@@ -1,6 +1,8 @@
+using Azure.AI.ContentSafety;
 using Azure.AI.Inference;
 using Azure.Core;
 using Azure.Identity;
+using Microsoft.Extensions.Logging;
 using ZavaStorefront.Models;
 
 namespace ZavaStorefront.Services
@@ -8,6 +10,8 @@ namespace ZavaStorefront.Services
     public class ChatService
     {
         private readonly ChatCompletionsClient _client;
+        private readonly ContentSafetyClient _contentSafetyClient;
+        private readonly ILogger<ChatService> _logger;
         private const string DeploymentName = "Phi-4-mini-instruct";
 
         // The Azure AI Inference SDK derives the OAuth2 scope from the endpoint URL, which
@@ -26,16 +30,24 @@ namespace ZavaStorefront.Services
                 => _inner.GetTokenAsync(new TokenRequestContext(Scopes), ct);
         }
 
-        public ChatService(IConfiguration config, ProductService productService)
+        public ChatService(IConfiguration config, ProductService productService, ILogger<ChatService> logger)
         {
+            _logger = logger;
+
             var endpoint = new Uri(config["AZURE_AI_INFERENCE_ENDPOINT"]
                 ?? throw new InvalidOperationException("AZURE_AI_INFERENCE_ENDPOINT is not configured."));
+
+            var aiServicesEndpoint = new Uri(config["AZURE_AI_SERVICES_ENDPOINT"]
+                ?? throw new InvalidOperationException("AZURE_AI_SERVICES_ENDPOINT is not configured."));
+
+            var credential = new CognitiveServicesCredential();
 
             // Identity-only — the CognitiveServicesCredential wrapper uses DefaultAzureCredential
             // (App Service system-assigned managed identity in production, Azure CLI locally)
             // and enforces the https://cognitiveservices.azure.com audience so the token is
             // accepted by the endpoint. No API key is ever used (disableLocalAuth: true).
-            _client = new ChatCompletionsClient(endpoint, new CognitiveServicesCredential(), new AzureAIInferenceClientOptions());
+            _client = new ChatCompletionsClient(endpoint, credential, new AzureAIInferenceClientOptions());
+            _contentSafetyClient = new ContentSafetyClient(aiServicesEndpoint, credential);
 
             // Build the product catalog at startup — captured once as a readonly list and
             // also tokenized into individual words for the server-side relevance guard.
@@ -80,8 +92,41 @@ namespace ZavaStorefront.Services
             "Answer customer questions strictly and only from the product context provided to you. " +
             "Never use outside knowledge.";
 
+        private async Task<(bool isSafe, string? blockedReason)> CheckContentSafetyAsync(string text)
+        {
+            var request = new AnalyzeTextOptions(text);
+            var response = await _contentSafetyClient.AnalyzeTextAsync(request);
+            var result = response.Value;
+
+            // Log all category scores
+            _logger.LogInformation("ContentSafety: category=Violence severity={Severity}", result.CategoriesAnalysis.FirstOrDefault(c => c.Category == TextCategory.Violence)?.Severity ?? 0);
+            _logger.LogInformation("ContentSafety: category=Sexual severity={Severity}", result.CategoriesAnalysis.FirstOrDefault(c => c.Category == TextCategory.Sexual)?.Severity ?? 0);
+            _logger.LogInformation("ContentSafety: category=SelfHarm severity={Severity}", result.CategoriesAnalysis.FirstOrDefault(c => c.Category == TextCategory.SelfHarm)?.Severity ?? 0);
+            _logger.LogInformation("ContentSafety: category=Hate severity={Severity}", result.CategoriesAnalysis.FirstOrDefault(c => c.Category == TextCategory.Hate)?.Severity ?? 0);
+
+            // Check for violations (severity >= 2)
+            foreach (var category in result.CategoriesAnalysis)
+            {
+                if (category.Severity >= 2)
+                {
+                    _logger.LogInformation("ContentSafety: result=BLOCKED category={Category} severity={Severity}", category.Category, category.Severity);
+                    return (false, category.Category.ToString());
+                }
+            }
+
+            _logger.LogInformation("ContentSafety: result=PASS prompt_length={Length}", text.Length);
+            return (true, null);
+        }
+
         public async Task<string> GetResponseAsync(string userMessage)
         {
+            // Content safety check: evaluate user input before any processing
+            var (isSafe, blockedReason) = await CheckContentSafetyAsync(userMessage);
+            if (!isSafe)
+            {
+                return "I'm sorry, I can't help with that. Your message was flagged for safety concerns.";
+            }
+
             // Server-side relevance guard: reject clearly off-topic requests before
             // they reach the model to prevent misuse.
             if (!IsRelatedToStore(userMessage))
