@@ -154,7 +154,7 @@ resource aiServicesDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01
     workspaceId: logAnalyticsWorkspaceId
     logs: [
       {
-        category: 'AuditEvent'
+        category: 'Audit'
         enabled: true
       }
       {
@@ -162,7 +162,7 @@ resource aiServicesDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01
         enabled: true
       }
       {
-        category: 'OpenAIRequestUsage'
+        category: 'AzureOpenAIRequestUsage'
         enabled: true
       }
       {
