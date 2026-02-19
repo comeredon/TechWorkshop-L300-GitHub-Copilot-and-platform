@@ -3,93 +3,87 @@
     ViewData["Title"] = "Products";
 }
 
-<div class="container mt-4">
+<div class="container-fluid mt-4">
     <h1 class="mb-4">Our Products</h1>
 
-    <div class="row">
-        <!-- Left sidebar: image generation controls -->
-        <div class="col-md-2">
-            <div class="d-grid gap-2">
-                <button id="btnGenerateImages" class="btn btn-outline-primary">
-                    <i class="bi bi-image"></i> Change Images
-                </button>
-            </div>
-            <div id="imageGenerationStatus" class="mt-3 text-muted small" style="display:none;">
-                <div class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></div>
-                Your pictures are being generated...
-            </div>
-        </div>
-
-        <!-- Right area: product grid -->
-        <div class="col-md-10">
-            <div class="row">
-                @foreach (var product in Model)
-                {
-                    <div class="col-md-6 col-lg-4 mb-4">
-                        <div class="card h-100">
-                            <img src="@product.ImageUrl"
-                                 class="card-img-top product-image"
-                                 alt="@product.Name"
-                                 data-product-id="@product.Id"
-                                 data-description="@product.Description"
-                                 onerror="this.src='https://via.placeholder.com/300x200?text=@Uri.EscapeDataString(product.Name)'">
-                            <div class="card-body d-flex flex-column">
-                                <h5 class="card-title">@product.Name</h5>
-                                <p class="card-text flex-grow-1">@product.Description</p>
-                                <div class="mt-auto">
-                                    <p class="card-text"><strong>$@product.Price.ToString("F2")</strong></p>
-                                    <form asp-controller="Home" asp-action="AddToCart" method="post">
-                                        <input type="hidden" name="productId" value="@product.Id" />
-                                        <button type="submit" class="btn btn-primary w-100">Buy</button>
-                                    </form>
-                                </div>
-                            </div>
+    <div class="row g-3">
+        @foreach (var product in Model)
+        {
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2">
+                <div class="card h-100">
+                    <!-- Generate Image Button at the top -->
+                    <div class="card-header bg-white border-0 p-2">
+                        <button class="btn btn-outline-primary btn-sm w-100 generate-image-btn"
+                                data-product-id="@product.Id"
+                                data-description="@product.Description">
+                            <i class="bi bi-image"></i> Generate Image
+                        </button>
+                        <div class="image-status text-center mt-1 text-muted small" style="display:none;">
+                            <div class="spinner-border spinner-border-sm" role="status"></div>
+                            <span class="ms-1">Generating...</span>
                         </div>
                     </div>
-                }
+                    
+                    <img src="@product.ImageUrl"
+                         class="card-img-top product-image"
+                         alt="@product.Name"
+                         data-product-id="@product.Id"
+                         onerror="this.src='https://via.placeholder.com/300x200?text=@Uri.EscapeDataString(product.Name)'">
+                    
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">@product.Name</h5>
+                        <p class="card-text flex-grow-1 small">@product.Description</p>
+                        <div class="mt-auto">
+                            <p class="card-text"><strong>$@product.Price.ToString("F2")</strong></p>
+                            <form asp-controller="Home" asp-action="AddToCart" method="post">
+                                <input type="hidden" name="productId" value="@product.Id" />
+                                <button type="submit" class="btn btn-primary w-100">Buy</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
+        }
     </div>
 </div>
 
 @section Scripts {
 <script>
-    document.getElementById('btnGenerateImages').addEventListener('click', async function () {
-        const btn = this;
-        const status = document.getElementById('imageGenerationStatus');
+    // Handle individual image generation per product
+    document.querySelectorAll('.generate-image-btn').forEach(function(btn) {
+        btn.addEventListener('click', async function() {
+            const productId = parseInt(this.getAttribute('data-product-id'), 10);
+            const description = this.getAttribute('data-description');
+            const card = this.closest('.card');
+            const img = card.querySelector('img[data-product-id="' + productId + '"]');
+            const status = card.querySelector('.image-status');
 
-        btn.disabled = true;
-        status.style.display = 'block';
+            // Disable button and show loading
+            btn.disabled = true;
+            status.style.display = 'block';
 
-        const images = document.querySelectorAll('img[data-product-id]');
+            try {
+                const response = await fetch('/Image/Generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ productId: productId, description: description })
+                });
 
-        const tasks = Array.from(images).map(function (img) {
-            const productId = parseInt(img.getAttribute('data-product-id'), 10);
-            const description = img.getAttribute('data-description');
-
-            return fetch('/Image/Generate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ productId: productId, description: description })
-            })
-            .then(function (response) {
-                if (!response.ok) return; // silent fallback — keep original image
-                return response.json();
-            })
-            .then(function (data) {
-                if (data && data.imageUrl) {
-                    img.src = data.imageUrl;
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data && data.imageUrl) {
+                        img.src = data.imageUrl;
+                    }
                 }
-            })
-            .catch(function () {
-                // silent fallback — keep the original image on any network error
-            });
+            } catch (error) {
+                // Silent fallback — keep the original image on any network error
+                console.error('Image generation failed:', error);
+            } finally {
+                // Re-enable button and hide loading
+                status.style.display = 'none';
+                btn.disabled = false;
+            }
         });
-
-        await Promise.allSettled(tasks);
-
-        status.style.display = 'none';
-        btn.disabled = false;
     });
 </script>
 }
