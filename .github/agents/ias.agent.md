@@ -17,3 +17,6 @@ Ensure that the deployed Azure resources match the current bicep configuration f
 validate no API keys are stored in the configuration, and that managed identity is enabled. 
 If there are any discrepancies, suggest fixes for my approval.
 
+Ensure that the Bicep and other file you generate are clear engough for a developer agent to implment them folowing your requirements, 
+
+
