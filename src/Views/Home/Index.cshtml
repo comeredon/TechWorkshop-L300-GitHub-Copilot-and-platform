@@ -7,24 +7,89 @@
     <h1 class="mb-4">Our Products</h1>
 
     <div class="row">
-        @foreach (var product in Model)
-        {
-            <div class="col-md-6 col-lg-3 mb-4">
-                <div class="card h-100">
-                    <img src="@product.ImageUrl" class="card-img-top product-image" alt="@product.Name" onerror="this.src='https://via.placeholder.com/300x200?text=@Uri.EscapeDataString(product.Name)'">
-                    <div class="card-body d-flex flex-column">
-                        <h5 class="card-title">@product.Name</h5>
-                        <p class="card-text flex-grow-1">@product.Description</p>
-                        <div class="mt-auto">
-                            <p class="card-text"><strong>$@product.Price.ToString("F2")</strong></p>
-                            <form asp-controller="Home" asp-action="AddToCart" method="post">
-                                <input type="hidden" name="productId" value="@product.Id" />
-                                <button type="submit" class="btn btn-primary w-100">Buy</button>
-                            </form>
+        <!-- Left sidebar: image generation controls -->
+        <div class="col-md-2">
+            <div class="d-grid gap-2">
+                <button id="btnGenerateImages" class="btn btn-outline-primary">
+                    <i class="bi bi-image"></i> Change Images
+                </button>
+            </div>
+            <div id="imageGenerationStatus" class="mt-3 text-muted small" style="display:none;">
+                <div class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></div>
+                Your pictures are being generated...
+            </div>
+        </div>
+
+        <!-- Right area: product grid -->
+        <div class="col-md-10">
+            <div class="row">
+                @foreach (var product in Model)
+                {
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card h-100">
+                            <img src="@product.ImageUrl"
+                                 class="card-img-top product-image"
+                                 alt="@product.Name"
+                                 data-product-id="@product.Id"
+                                 data-description="@product.Description"
+                                 onerror="this.src='https://via.placeholder.com/300x200?text=@Uri.EscapeDataString(product.Name)'">
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title">@product.Name</h5>
+                                <p class="card-text flex-grow-1">@product.Description</p>
+                                <div class="mt-auto">
+                                    <p class="card-text"><strong>$@product.Price.ToString("F2")</strong></p>
+                                    <form asp-controller="Home" asp-action="AddToCart" method="post">
+                                        <input type="hidden" name="productId" value="@product.Id" />
+                                        <button type="submit" class="btn btn-primary w-100">Buy</button>
+                                    </form>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
+                }
             </div>
-        }
+        </div>
     </div>
 </div>
+
+@section Scripts {
+<script>
+    document.getElementById('btnGenerateImages').addEventListener('click', async function () {
+        const btn = this;
+        const status = document.getElementById('imageGenerationStatus');
+
+        btn.disabled = true;
+        status.style.display = 'block';
+
+        const images = document.querySelectorAll('img[data-product-id]');
+
+        const tasks = Array.from(images).map(function (img) {
+            const productId = parseInt(img.getAttribute('data-product-id'), 10);
+            const description = img.getAttribute('data-description');
+
+            return fetch('/Image/Generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ productId: productId, description: description })
+            })
+            .then(function (response) {
+                if (!response.ok) return; // silent fallback — keep original image
+                return response.json();
+            })
+            .then(function (data) {
+                if (data && data.imageUrl) {
+                    img.src = data.imageUrl;
+                }
+            })
+            .catch(function () {
+                // silent fallback — keep the original image on any network error
+            });
+        });
+
+        await Promise.allSettled(tasks);
+
+        status.style.display = 'none';
+        btn.disabled = false;
+    });
+</script>
+}

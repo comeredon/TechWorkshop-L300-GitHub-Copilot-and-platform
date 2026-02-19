@@ -19,6 +19,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton<ProductService>();
 builder.Services.AddScoped<CartService>();
 builder.Services.AddSingleton<ZavaStorefront.Services.ChatService>();
+builder.Services.AddSingleton<ZavaStorefront.Services.ImageGenerationService>();
 
 var app = builder.Build();
 
