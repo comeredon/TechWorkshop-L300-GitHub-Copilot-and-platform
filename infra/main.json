@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.37.4.10188",
-      "templateHash": "13730001837099801679"
+      "templateHash": "17145779103872257551"
     }
   },
   "parameters": {
@@ -380,7 +380,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.37.4.10188",
-              "templateHash": "1488819651364695867"
+              "templateHash": "18364910886179218945"
             }
           },
           "parameters": {
@@ -495,6 +495,27 @@
               "dependsOn": [
                 "[resourceId('Microsoft.CognitiveServices/accounts', variables('aiServicesName'))]",
                 "[resourceId('Microsoft.CognitiveServices/accounts/deployments', variables('aiServicesName'), 'gpt-4o')]"
+              ]
+            },
+            {
+              "type": "Microsoft.CognitiveServices/accounts/deployments",
+              "apiVersion": "2024-04-01-preview",
+              "name": "[format('{0}/{1}', variables('aiServicesName'), 'gpt-image-1.5')]",
+              "sku": {
+                "name": "GlobalStandard",
+                "capacity": 1
+              },
+              "properties": {
+                "model": {
+                  "format": "OpenAI",
+                  "name": "gpt-image-1.5",
+                  "version": "2025-12-16"
+                },
+                "raiPolicyName": "Microsoft.DefaultV2"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.CognitiveServices/accounts', variables('aiServicesName'))]",
+                "[resourceId('Microsoft.CognitiveServices/accounts/deployments', variables('aiServicesName'), 'Phi-4-mini-instruct')]"
               ]
             },
             {
@@ -635,6 +656,10 @@
             "aiInferenceEndpoint": {
               "type": "string",
               "value": "[format('https://{0}.cognitiveservices.azure.com/models', variables('aiServicesName'))]"
+            },
+            "aiImageDeploymentName": {
+              "type": "string",
+              "value": "gpt-image-1.5"
             }
           }
         }
@@ -677,6 +702,9 @@
           },
           "aiInferenceEndpoint": {
             "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'aifoundry'), '2022-09-01').outputs.aiInferenceEndpoint.value]"
+          },
+          "aiImageDeploymentName": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'aifoundry'), '2022-09-01').outputs.aiImageDeploymentName.value]"
           }
         },
         "template": {
@@ -686,7 +714,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.37.4.10188",
-              "templateHash": "883579653829262527"
+              "templateHash": "11805722149770152065"
             }
           },
           "parameters": {
@@ -713,6 +741,9 @@
               "type": "string"
             },
             "aiInferenceEndpoint": {
+              "type": "string"
+            },
+            "aiImageDeploymentName": {
               "type": "string"
             }
           },
@@ -771,6 +802,10 @@
                     {
                       "name": "AZURE_AI_INFERENCE_ENDPOINT",
                       "value": "[parameters('aiInferenceEndpoint')]"
+                    },
+                    {
+                      "name": "AZURE_AI_IMAGE_DEPLOYMENT_NAME",
+                      "value": "[parameters('aiImageDeploymentName')]"
                     }
                   ]
                 }

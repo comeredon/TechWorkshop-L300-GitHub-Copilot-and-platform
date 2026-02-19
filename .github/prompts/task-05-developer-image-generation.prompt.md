@@ -1,7 +1,7 @@
 ---
 mode: agent
 agent: developer
-description: Task 05 – Add AI-powered product image generation feature (developer prompt)
+description: Task 05 – Add AI-powered product image generation feature using gpt-image-1.5 (developer prompt)
 ---
 
 # Task 05 – AI-Powered Product Image Generation
@@ -14,7 +14,8 @@ description: Task 05 – Add AI-powered product image generation feature (develo
 - Authentication pattern: `CognitiveServicesCredential` — a private nested class that wraps `DefaultAzureCredential` and forces the `https://cognitiveservices.azure.com/.default` scope. It is already defined in `src/Services/ChatService.cs`. **Replicate this same pattern in the new service — do NOT introduce API keys and do NOT create a shared base class.**
 - Config keys available as environment variables on the App Service:
   - `AZURE_AI_SERVICES_ENDPOINT` — Azure AI Services base endpoint (e.g. `https://aisXXXX.cognitiveservices.azure.com/`)
-  - `AZURE_AI_IMAGE_DEPLOYMENT_NAME` — DALL-E 3 deployment name (value: `dall-e-3`), provisioned by the IaS task
+  - `AZURE_AI_IMAGE_DEPLOYMENT_NAME` — image generation deployment name (value: `gpt-image-1.5`), provisioned by the IaS task
+- **Model note:** The deployed model is `gpt-image-1.5` (OpenAI format, GlobalStandard SKU, `westus3`). DALL-E 3 was not used because it is unavailable in `westus3` and deprecated as of 2026-03-04. The `Azure.AI.OpenAI` `ImageClient` API surface is identical — no code change is required compared to DALL-E 3.
 - Existing services: `ChatService`, `ProductService`, `CartService`
 - Content Safety: already used in `ChatService` (package: `Azure.AI.ContentSafety 1.0.0`). Reuse the same SDK and logging pattern in the new service.
 
@@ -243,7 +244,7 @@ At the bottom of `Index.cshtml`, add a `@section Scripts {}` block:
 ## Constraints
 - Do **not** use API keys — use `CognitiveServicesCredential` with `DefaultAzureCredential` exclusively.
 - Do **not** refactor, rename, or restructure any existing code.
-- Do **not** store generated image URLs server-side — they are ephemeral (24-hour expiry from DALL-E 3) and are only held in the browser DOM during the session.
+- Do **not** store generated image URLs server-side — they are ephemeral (short-lived, from `gpt-image-1.5`) and are only held in the browser DOM during the session.
 - Do **not** add new config keys — use only `AZURE_AI_SERVICES_ENDPOINT` and `AZURE_AI_IMAGE_DEPLOYMENT_NAME`.
 - Do **not** catch and swallow `ImageGenerationService` exceptions.
 - Do **not** modify any file under `.github/agents/`.

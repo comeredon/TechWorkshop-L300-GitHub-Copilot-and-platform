@@ -85,6 +85,7 @@ module appService './modules/appservice.bicep' = {
     acrName: acr.outputs.name
     aiServicesEndpoint: aiFoundry.outputs.aiServicesEndpoint
     aiInferenceEndpoint: aiFoundry.outputs.aiInferenceEndpoint
+    aiImageDeploymentName: aiFoundry.outputs.aiImageDeploymentName
   }
 }
 

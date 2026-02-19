@@ -97,6 +97,25 @@ resource phiDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-04
   }
 }
 
+// gpt-image-1.5 — image generation model (replaces DALL-E 3, available in westus3) — OpenAI format
+resource dalleDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-04-01-preview' = {
+  parent: aiServices
+  name: 'gpt-image-1.5'
+  dependsOn: [phiDeployment] // deployments in the same account must be sequential
+  sku: {
+    name: 'GlobalStandard'
+    capacity: 1
+  }
+  properties: {
+    model: {
+      format: 'OpenAI'
+      name: 'gpt-image-1.5'
+      version: '2025-12-16'
+    }
+    raiPolicyName: 'Microsoft.DefaultV2'
+  }
+}
+
 // ── Azure AI Foundry Hub ──────────────────────────────────────────────────────
 
 resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-04-01' = {
@@ -221,3 +240,4 @@ output aiServicesName string = aiServices.name
 // "Cognitive Services User" RBAC role (scoped to this AI Services resource) is honoured.
 // The services.ai.azure.com alias would require a separate AI Foundry RBAC assignment.
 output aiInferenceEndpoint string = 'https://${aiServicesName}.cognitiveservices.azure.com/models'
+output aiImageDeploymentName string = dalleDeployment.name
