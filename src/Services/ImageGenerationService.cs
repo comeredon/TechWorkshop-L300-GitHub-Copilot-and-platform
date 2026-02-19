@@ -34,8 +34,11 @@ namespace ZavaStorefront.Services
 
             try
             {
-                var endpoint = new Uri(config["AZURE_AI_SERVICES_ENDPOINT"]
-                    ?? throw new InvalidOperationException("AZURE_AI_SERVICES_ENDPOINT is not configured."));
+                var endpoint = new Uri(config["AZURE_AI_IMAGE_SERVICES_ENDPOINT"]
+                    ?? throw new InvalidOperationException("AZURE_AI_IMAGE_SERVICES_ENDPOINT is not configured."));
+
+                var contentSafetyEndpoint = new Uri(config["AZURE_AI_CONTENT_SAFETY_ENDPOINT"]
+                    ?? throw new InvalidOperationException("AZURE_AI_CONTENT_SAFETY_ENDPOINT is not configured."));
 
                 var deploymentName = config["AZURE_AI_IMAGE_DEPLOYMENT_NAME"]
                     ?? throw new InvalidOperationException("AZURE_AI_IMAGE_DEPLOYMENT_NAME is not configured.");
@@ -45,13 +48,11 @@ namespace ZavaStorefront.Services
 
                 var credential = new CognitiveServicesCredential();
 
-                // Identity-only — the CognitiveServicesCredential wrapper uses DefaultAzureCredential
-                // (App Service system-assigned managed identity in production, Azure CLI locally)
-                // and enforces the https://cognitiveservices.azure.com audience so the token is
-                // accepted by the endpoint. No API key is ever used (disableLocalAuth: true).
+                // Use the Azure OpenAI client with default configuration
+                // Per Microsoft documentation: https://learn.microsoft.com/azure/ai-foundry/openai/dall-e-quickstart
                 var client = new AzureOpenAIClient(endpoint, credential);
                 _imageClient = client.GetImageClient(deploymentName);
-                _contentSafetyClient = new ContentSafetyClient(endpoint, credential);
+                _contentSafetyClient = new ContentSafetyClient(contentSafetyEndpoint, credential);
 
                 _logger.LogInformation("ImageGenerationService: initialized successfully");
             }

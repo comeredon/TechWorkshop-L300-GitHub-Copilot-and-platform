@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.37.4.10188",
-      "templateHash": "17145779103872257551"
+      "templateHash": "9944888622866328415"
     }
   },
   "parameters": {
@@ -380,7 +380,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.37.4.10188",
-              "templateHash": "18364910886179218945"
+              "templateHash": "14551416872099711270"
             }
           },
           "parameters": {
@@ -404,7 +404,8 @@
           "variables": {
             "storageAccountName": "[format('st{0}', uniqueString(resourceGroup().id, parameters('hubName')))]",
             "keyVaultName": "[format('kv{0}', uniqueString(resourceGroup().id, parameters('hubName')))]",
-            "aiServicesName": "[format('ais{0}', uniqueString(resourceGroup().id, parameters('hubName')))]"
+            "aiServicesName": "[format('ais{0}', uniqueString(resourceGroup().id, parameters('hubName')))]",
+            "imageServicesName": "[format('ais{0}-image', uniqueString(resourceGroup().id, parameters('hubName')))]"
           },
           "resources": [
             {
@@ -498,24 +499,39 @@
               ]
             },
             {
+              "type": "Microsoft.CognitiveServices/accounts",
+              "apiVersion": "2024-04-01-preview",
+              "name": "[variables('imageServicesName')]",
+              "location": "swedencentral",
+              "tags": "[parameters('tags')]",
+              "kind": "OpenAI",
+              "sku": {
+                "name": "S0"
+              },
+              "properties": {
+                "customSubDomainName": "[variables('imageServicesName')]",
+                "publicNetworkAccess": "Enabled",
+                "disableLocalAuth": true
+              }
+            },
+            {
               "type": "Microsoft.CognitiveServices/accounts/deployments",
               "apiVersion": "2024-04-01-preview",
-              "name": "[format('{0}/{1}', variables('aiServicesName'), 'gpt-image-1.5')]",
+              "name": "[format('{0}/{1}', variables('imageServicesName'), 'dall-e-3')]",
               "sku": {
-                "name": "GlobalStandard",
+                "name": "Standard",
                 "capacity": 1
               },
               "properties": {
                 "model": {
                   "format": "OpenAI",
-                  "name": "gpt-image-1.5",
-                  "version": "2025-12-16"
+                  "name": "dall-e-3",
+                  "version": "3.0"
                 },
                 "raiPolicyName": "Microsoft.DefaultV2"
               },
               "dependsOn": [
-                "[resourceId('Microsoft.CognitiveServices/accounts', variables('aiServicesName'))]",
-                "[resourceId('Microsoft.CognitiveServices/accounts/deployments', variables('aiServicesName'), 'Phi-4-mini-instruct')]"
+                "[resourceId('Microsoft.CognitiveServices/accounts', variables('imageServicesName'))]"
               ]
             },
             {
@@ -657,9 +673,17 @@
               "type": "string",
               "value": "[format('https://{0}.cognitiveservices.azure.com/models', variables('aiServicesName'))]"
             },
+            "aiImageServicesEndpoint": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', variables('imageServicesName')), '2024-04-01-preview').endpoint]"
+            },
+            "aiImageServicesName": {
+              "type": "string",
+              "value": "[variables('imageServicesName')]"
+            },
             "aiImageDeploymentName": {
               "type": "string",
-              "value": "gpt-image-1.5"
+              "value": "dall-e-3"
             }
           }
         }
@@ -703,6 +727,9 @@
           "aiInferenceEndpoint": {
             "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'aifoundry'), '2022-09-01').outputs.aiInferenceEndpoint.value]"
           },
+          "aiImageServicesEndpoint": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'aifoundry'), '2022-09-01').outputs.aiImageServicesEndpoint.value]"
+          },
           "aiImageDeploymentName": {
             "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'aifoundry'), '2022-09-01').outputs.aiImageDeploymentName.value]"
           }
@@ -714,7 +741,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.37.4.10188",
-              "templateHash": "11805722149770152065"
+              "templateHash": "10540900305145667082"
             }
           },
           "parameters": {
@@ -741,6 +768,9 @@
               "type": "string"
             },
             "aiInferenceEndpoint": {
+              "type": "string"
+            },
+            "aiImageServicesEndpoint": {
               "type": "string"
             },
             "aiImageDeploymentName": {
@@ -802,6 +832,10 @@
                     {
                       "name": "AZURE_AI_INFERENCE_ENDPOINT",
                       "value": "[parameters('aiInferenceEndpoint')]"
+                    },
+                    {
+                      "name": "AZURE_AI_IMAGE_SERVICES_ENDPOINT",
+                      "value": "[parameters('aiImageServicesEndpoint')]"
                     },
                     {
                       "name": "AZURE_AI_IMAGE_DEPLOYMENT_NAME",
@@ -869,6 +903,9 @@
           "aiServicesName": {
             "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'aifoundry'), '2022-09-01').outputs.aiServicesName.value]"
           },
+          "aiImageServicesName": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'aifoundry'), '2022-09-01').outputs.aiImageServicesName.value]"
+          },
           "appServicePrincipalId": {
             "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'appservice'), '2022-09-01').outputs.principalId.value]"
           }
@@ -880,11 +917,14 @@
             "_generator": {
               "name": "bicep",
               "version": "0.37.4.10188",
-              "templateHash": "2422551388902222910"
+              "templateHash": "3593647719215242829"
             }
           },
           "parameters": {
             "aiServicesName": {
+              "type": "string"
+            },
+            "aiImageServicesName": {
               "type": "string"
             },
             "appServicePrincipalId": {
@@ -897,6 +937,17 @@
               "apiVersion": "2022-04-01",
               "scope": "[format('Microsoft.CognitiveServices/accounts/{0}', parameters('aiServicesName'))]",
               "name": "[guid(resourceId('Microsoft.CognitiveServices/accounts', parameters('aiServicesName')), parameters('appServicePrincipalId'), 'a97b65f3-24c7-4388-baec-2e87135dc908')]",
+              "properties": {
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'a97b65f3-24c7-4388-baec-2e87135dc908')]",
+                "principalId": "[parameters('appServicePrincipalId')]",
+                "principalType": "ServicePrincipal"
+              }
+            },
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[format('Microsoft.CognitiveServices/accounts/{0}', parameters('aiImageServicesName'))]",
+              "name": "[guid(resourceId('Microsoft.CognitiveServices/accounts', parameters('aiImageServicesName')), parameters('appServicePrincipalId'), 'a97b65f3-24c7-4388-baec-2e87135dc908')]",
               "properties": {
                 "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'a97b65f3-24c7-4388-baec-2e87135dc908')]",
                 "principalId": "[parameters('appServicePrincipalId')]",

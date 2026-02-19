@@ -85,6 +85,7 @@ module appService './modules/appservice.bicep' = {
     acrName: acr.outputs.name
     aiServicesEndpoint: aiFoundry.outputs.aiServicesEndpoint
     aiInferenceEndpoint: aiFoundry.outputs.aiInferenceEndpoint
+    aiImageServicesEndpoint: aiFoundry.outputs.aiImageServicesEndpoint
     aiImageDeploymentName: aiFoundry.outputs.aiImageDeploymentName
   }
 }
@@ -97,6 +98,7 @@ module aifoundryAppServiceRbac './modules/aifoundry-appservice-rbac.bicep' = {
   scope: rg
   params: {
     aiServicesName: aiFoundry.outputs.aiServicesName
+    aiImageServicesName: aiFoundry.outputs.aiImageServicesName
     appServicePrincipalId: appService.outputs.principalId
   }
 }

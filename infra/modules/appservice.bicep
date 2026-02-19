@@ -6,6 +6,7 @@ param acrLoginServer string
 param acrName string
 param aiServicesEndpoint string
 param aiInferenceEndpoint string
+param aiImageServicesEndpoint string
 param aiImageDeploymentName string
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2023-12-01' = {
@@ -64,8 +65,16 @@ resource appService 'Microsoft.Web/sites@2023-12-01' = {
           value: aiInferenceEndpoint
         }
         {
+          name: 'AZURE_AI_IMAGE_SERVICES_ENDPOINT'
+          value: aiImageServicesEndpoint
+        }
+        {
           name: 'AZURE_AI_IMAGE_DEPLOYMENT_NAME'
           value: aiImageDeploymentName
+        }
+        {
+          name: 'AZURE_AI_CONTENT_SAFETY_ENDPOINT'
+          value: aiServicesEndpoint
         }
       ]
     }

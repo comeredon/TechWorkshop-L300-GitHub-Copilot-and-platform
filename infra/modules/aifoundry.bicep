@@ -97,20 +97,37 @@ resource phiDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-04
   }
 }
 
-// gpt-image-1.5 — image generation model (replaces DALL-E 3, available in westus3) — OpenAI format
-resource dalleDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-04-01-preview' = {
-  parent: aiServices
-  name: 'gpt-image-1.5'
-  dependsOn: [phiDeployment] // deployments in the same account must be sequential
+// DALL-E 3 image generation model deployment (in swedencentral)
+// Note: DALL-E 3 Standard SKU not available in westus3, using swedencentral instead
+var imageServicesName = 'ais${uniqueString(resourceGroup().id, hubName)}-image'
+
+resource imageServices 'Microsoft.CognitiveServices/accounts@2024-04-01-preview' = {
+  name: imageServicesName
+  location: 'swedencentral'
+  tags: tags
+  kind: 'OpenAI'
   sku: {
-    name: 'GlobalStandard'
+    name: 'S0'
+  }
+  properties: {
+    customSubDomainName: imageServicesName
+    publicNetworkAccess: 'Enabled'
+    disableLocalAuth: true
+  }
+}
+
+resource dalleDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-04-01-preview' = {
+  parent: imageServices
+  name: 'dall-e-3'
+  sku: {
+    name: 'Standard'
     capacity: 1
   }
   properties: {
     model: {
       format: 'OpenAI'
-      name: 'gpt-image-1.5'
-      version: '2025-12-16'
+      name: 'dall-e-3'
+      version: '3.0'
     }
     raiPolicyName: 'Microsoft.DefaultV2'
   }
@@ -240,4 +257,6 @@ output aiServicesName string = aiServices.name
 // "Cognitive Services User" RBAC role (scoped to this AI Services resource) is honoured.
 // The services.ai.azure.com alias would require a separate AI Foundry RBAC assignment.
 output aiInferenceEndpoint string = 'https://${aiServicesName}.cognitiveservices.azure.com/models'
+output aiImageServicesEndpoint string = imageServices.properties.endpoint
+output aiImageServicesName string = imageServices.name
 output aiImageDeploymentName string = dalleDeployment.name
