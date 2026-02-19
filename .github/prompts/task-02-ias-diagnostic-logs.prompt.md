@@ -19,12 +19,14 @@ description: Task 02 – Enable diagnostic logs for Microsoft Foundry (IaS promp
 Add a new `Microsoft.Insights/diagnosticSettings` resource scoped to the `aiServices` resource that:
 1. Sends logs to the existing Log Analytics workspace (`logAnalyticsWorkspaceId`).
 2. Enables the following log categories:
-   - `AuditEvent`
+   - `Audit` (not `AuditEvent`)
    - `RequestResponse`
-   - `OpenAIRequestUsage`
+   - `AzureOpenAIRequestUsage` (not `OpenAIRequestUsage`)
    - `Trace`
 3. Enables the `AllMetrics` metric category.
 4. Names the diagnostic setting `diag-${aiServices.name}`.
+
+> **Note:** The correct category names were verified against the live Azure resource. Use `az monitor diagnostic-settings categories list` to confirm supported categories.
 
 ## Constraints
 - Do **not** change any other resource in the file.

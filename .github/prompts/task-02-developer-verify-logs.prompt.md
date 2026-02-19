@@ -23,9 +23,9 @@ AzureDiagnostics
 ```
 
 3. Confirm the following log categories are present in the query results:
-   - `AuditEvent`
+   - `Audit`
    - `RequestResponse`
-   - `OpenAIRequestUsage`
+   - `AzureOpenAIRequestUsage`
    - `Trace`
 
 ## Constraints
