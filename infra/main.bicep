@@ -29,6 +29,17 @@ module logAnalytics './modules/loganalytics.bicep' = {
   }
 }
 
+module workbook './modules/workbook.bicep' = {
+  name: 'workbook'
+  scope: rg
+  params: {
+    name: 'workbook-${resourceToken}'
+    location: location
+    tags: tags
+    workspaceResourceId: logAnalytics.outputs.id
+  }
+}
+
 module appInsights './modules/appinsights.bicep' = {
   name: 'appinsights'
   scope: rg
