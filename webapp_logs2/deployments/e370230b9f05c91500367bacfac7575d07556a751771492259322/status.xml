@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<deployment>
+  <id>e370230b9f05c91500367bacfac7575d07556a751771492259322</id>
+  <author>comeredon</author>
+  <deployer>GitHub</deployer>
+  <authorEmail />
+  <message>{"type":"Deployment","sha":"e370230b9f05c91500367bacfac7575d07556a75","repoName":"comeredon/TechWorkshop-L300-GitHub-Copilot-and-platform","actor":"comeredon","slotName":"production"}</message>
+  <progress />
+  <status>Success</status>
+  <statusText />
+  <lastSuccessEndTime>2026-02-19T09:11:00.8945307Z</lastSuccessEndTime>
+  <receivedTime>2026-02-19T09:11:00.8945307Z</receivedTime>
+  <startTime>2026-02-19T09:11:00.8945307Z</startTime>
+  <endTime>2026-02-19T09:11:00.8945307Z</endTime>
+  <complete>True</complete>
+  <is_temp>False</is_temp>
+  <is_readonly>True</is_readonly>
+  <containerId>7fff6bf83808</containerId>
+  <buildSummary />
+</deployment>

@@ -32,21 +32,34 @@ namespace ZavaStorefront.Services
         {
             _logger = logger;
 
-            var endpoint = new Uri(config["AZURE_AI_SERVICES_ENDPOINT"]
-                ?? throw new InvalidOperationException("AZURE_AI_SERVICES_ENDPOINT is not configured."));
+            try
+            {
+                var endpoint = new Uri(config["AZURE_AI_SERVICES_ENDPOINT"]
+                    ?? throw new InvalidOperationException("AZURE_AI_SERVICES_ENDPOINT is not configured."));
 
-            var deploymentName = config["AZURE_AI_IMAGE_DEPLOYMENT_NAME"]
-                ?? throw new InvalidOperationException("AZURE_AI_IMAGE_DEPLOYMENT_NAME is not configured.");
+                var deploymentName = config["AZURE_AI_IMAGE_DEPLOYMENT_NAME"]
+                    ?? throw new InvalidOperationException("AZURE_AI_IMAGE_DEPLOYMENT_NAME is not configured.");
 
-            var credential = new CognitiveServicesCredential();
+                _logger.LogInformation("ImageGenerationService: initializing with endpoint={Endpoint} deployment={Deployment}", 
+                    endpoint, deploymentName);
 
-            // Identity-only — the CognitiveServicesCredential wrapper uses DefaultAzureCredential
-            // (App Service system-assigned managed identity in production, Azure CLI locally)
-            // and enforces the https://cognitiveservices.azure.com audience so the token is
-            // accepted by the endpoint. No API key is ever used (disableLocalAuth: true).
-            var client = new AzureOpenAIClient(endpoint, credential);
-            _imageClient = client.GetImageClient(deploymentName);
-            _contentSafetyClient = new ContentSafetyClient(endpoint, credential);
+                var credential = new CognitiveServicesCredential();
+
+                // Identity-only — the CognitiveServicesCredential wrapper uses DefaultAzureCredential
+                // (App Service system-assigned managed identity in production, Azure CLI locally)
+                // and enforces the https://cognitiveservices.azure.com audience so the token is
+                // accepted by the endpoint. No API key is ever used (disableLocalAuth: true).
+                var client = new AzureOpenAIClient(endpoint, credential);
+                _imageClient = client.GetImageClient(deploymentName);
+                _contentSafetyClient = new ContentSafetyClient(endpoint, credential);
+
+                _logger.LogInformation("ImageGenerationService: initialized successfully");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "ImageGenerationService: failed to initialize - {Error}", ex.Message);
+                throw;
+            }
         }
 
         public async Task<string?> GenerateProductImageAsync(string productDescription)
@@ -88,16 +101,19 @@ namespace ZavaStorefront.Services
             _logger.LogInformation("ImageGeneration: generating image for description length={Length}", 
                 productDescription.Length);
 
-            var imageResult = await _imageClient.GenerateImageAsync(prompt, new ImageGenerationOptions
+            try
             {
-                Size = GeneratedImageSize.W1024xH1024,
-                Quality = GeneratedImageQuality.Standard,
-                ResponseFormat = GeneratedImageFormat.Uri
-            });
+                var imageResult = await _imageClient.GenerateImageAsync(prompt);
+                
+                _logger.LogInformation("ImageGeneration: image generated successfully");
 
-            _logger.LogInformation("ImageGeneration: image generated successfully");
-
-            return imageResult.Value.ImageUri.ToString();
+                return imageResult.Value.ImageUri?.ToString();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "ImageGeneration: failed to generate image - {Error}", ex.Message);
+                throw;
+            }
         }
     }
 }
