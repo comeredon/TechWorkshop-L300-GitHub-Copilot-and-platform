@@ -19,4 +19,5 @@ If there are any discrepancies, suggest fixes for my approval.
 
 Ensure that the Bicep and other file you generate are clear engough for a developer agent to implment them folowing your requirements, 
 
+Deploy the infra if you change it 
 

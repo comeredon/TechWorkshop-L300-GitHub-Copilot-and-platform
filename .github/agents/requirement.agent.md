@@ -8,9 +8,11 @@ model: Claude Sonnet 4.6 (copilot)
 
 
 # Purpose 
-Your task is to read the requirements from the file and build a plan to complete the task. Then, write prompts that will be send to another agent , developer, to complete the task 
+Your task is to read the requirements from the file and build a plan to complete the task. Then, write prompts that will be send to another agent ias, developer, to complete the task 
 This prompt will be analyze by the security agent to abide by it s principle.
 
 You must as well link to GitHub using the GitHub MCP to create issues as required in the repo. 
+
+The ias agent will be responsible to write the bicep code and deploy it, the developer agent will be responsible to write code in the app source code.
 
 
