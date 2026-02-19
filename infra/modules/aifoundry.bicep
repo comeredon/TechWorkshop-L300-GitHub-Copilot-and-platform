@@ -145,6 +145,40 @@ resource aiProject 'Microsoft.MachineLearningServices/workspaces@2024-04-01' = {
   }
 }
 
+// ── Diagnostic settings (AI Services → Log Analytics) ──────────────────────
+
+resource aiServicesDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  name: 'diag-${aiServices.name}'
+  scope: aiServices
+  properties: {
+    workspaceId: logAnalyticsWorkspaceId
+    logs: [
+      {
+        category: 'AuditEvent'
+        enabled: true
+      }
+      {
+        category: 'RequestResponse'
+        enabled: true
+      }
+      {
+        category: 'OpenAIRequestUsage'
+        enabled: true
+      }
+      {
+        category: 'Trace'
+        enabled: true
+      }
+    ]
+    metrics: [
+      {
+        category: 'AllMetrics'
+        enabled: true
+      }
+    ]
+  }
+}
+
 // ── Diagnostic settings (Hub → Log Analytics) ───────────────────────────────
 
 resource aiHubDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
